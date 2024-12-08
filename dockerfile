@@ -1,19 +1,9 @@
-FROM alpine:3.21 as build
-
-RUN apk upgrade && apk add clang
+FROM python:3.12-bullseye AS base
 
 WORKDIR /hyperlight 
 
-COPY ./hyperlight/c .
+COPY . .
 
-RUN ["clang++", "-o", "/usr/local/bin/hyperlight", "main.cpp"]
+RUN pip install -r requirements.txt 
 
-CMD ["sh"]
-
-
-FROM build as execute
-
-COPY --from=build /usr/local/bin/hyperlight /usr/local/bin/hyperlight
-
-CMD ["/usr/local/bin/hyperlight"]
-
+CMD ["bash"]
