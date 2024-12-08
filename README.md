@@ -2,7 +2,7 @@
 
 ## Introduction
 
-**Project Genesis** is an exploration into creating and training neural networks from scratch using Python and a few numerical libraries. This project aims to build a foundational understanding of neural networks by implementing them without relying on high-level frameworks.
+**Project HyperLight** is an exploration into creating and training neural networks from scratch using Python and a few numerical libraries. This project aims to build a foundational understanding of neural networks by implementing them without relying on high-level frameworks.
 
 ### Primary Goals
 
