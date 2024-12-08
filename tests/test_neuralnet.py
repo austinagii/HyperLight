@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 
-from genesis import NeuralNetwork
+from hyperlight import NeuralNetwork
 
 
 class TestNeuralNetwork():
