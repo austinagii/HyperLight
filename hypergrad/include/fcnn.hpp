@@ -7,8 +7,9 @@ namespace hyper {
       FCNN() = default;
       ~FCNN() = default;
 
-      int forward() {
-        return xt::sum(xt::xarray<int>{1, 2, 3})();
+      template <typename T>
+      T forward(xt::xarray<T> input) {
+        return xt::sum(input)();
       }
   };
 }
