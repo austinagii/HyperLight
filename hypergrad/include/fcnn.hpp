@@ -4,8 +4,11 @@
 namespace hyper {
   class FCNN {
     public:
-      template <typename T> T forward(const xt::xarray<T>& input) {
-        return xt::sum(input)();
+      FCNN() = default;
+      ~FCNN() = default;
+
+      int forward() {
+        return xt::sum(xt::xarray<int>{1, 2, 3})();
       }
   };
 }

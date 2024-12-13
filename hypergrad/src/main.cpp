@@ -7,7 +7,6 @@
 
 int main() {
     auto model = hyper::FCNN();
-    xt::xarray<double> input = {1.0, 2.0, 3.0, 4.0};
-    std::cout << "Output: " << model.forward(input) << std::endl;
+    std::cout << "Output: " << model.forward() << std::endl;
     return 0;
 }

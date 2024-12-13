@@ -25,7 +25,6 @@ FetchContent_MakeAvailable(xtensor)
 
 set(SOURCES
   src/main.cpp
-  src/fcnn.cpp
 )
 
 set(HEADERS 
