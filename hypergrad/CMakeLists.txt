@@ -2,10 +2,6 @@ cmake_minimum_required(VERSION 3.14)
 project(hypergrad)
 
 set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
-set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -undefined dynamic_lookup")
 
 find_package(Python COMPONENTS Interpreter Development REQUIRED)
 # find_package(numpy REQUIRED)
@@ -45,12 +41,11 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(xtensor-python)
 
 set(SOURCES
-  # src/main.cpp
   src/bindings.cpp
 )
 
 set(HEADERS 
-  include/fcnn.hpp
+  include/fcnn.h
 )
 
 pybind11_add_module(hyperpy ${SOURCES} ${HEADERS})
@@ -59,15 +54,17 @@ target_include_directories(hyperpy
   PRIVATE 
     ${xtensor_SOURCE_DIR}/include 
     ${xtl_SOURCE_DIR}/include
-    ${CMAKE_SOURCE_DIR}/include
     ${pybind11_SOURCE_DIR}/include
     ${xtensor-python_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/include
+    ${NUMPY_LIBRARIES}
 )
 
 # Add link libraries
 target_link_libraries(hyperpy PRIVATE 
     xtensor
     xtensor-python
+    pybind11::module
     Python::Python
     ${NUMPY_LIBRARIES}
 )

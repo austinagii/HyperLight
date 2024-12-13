@@ -1,3 +1,6 @@
+#ifndef FCNN_H
+#define FCNN_H
+
 #include <xtensor/xarray.hpp>
 #include <xtensor/xio.hpp>
 
@@ -7,9 +10,10 @@ namespace hyper {
       FCNN() = default;
       ~FCNN() = default;
 
-      template <typename T>
-      T forward(xt::xarray<T> input) {
+      double forward(const xt::xarray<double>& input) {
         return xt::sum(input)();
       }
   };
 }
+
+#endif // FCNN_H
