@@ -23,19 +23,29 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(xtensor)
 
+# Fetch pybind11
+FetchContent_Declare(
+  pybind11
+  GIT_REPOSITORY https://github.com/pybind/pybind11.git
+  GIT_TAG        v2.13.6
+)
+FetchContent_MakeAvailable(pybind11)
+
 set(SOURCES
   src/main.cpp
+  src/bindings.cpp
 )
 
 set(HEADERS 
   include/fcnn.hpp
 )
 
-add_executable(hypergrad ${SOURCES} ${HEADERS})
+pybind11_add_module(hypergrad ${SOURCES} ${HEADERS})
 
 target_include_directories(hypergrad 
   PRIVATE 
     ${xtensor_SOURCE_DIR}/include 
     ${xtl_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/include
+    ${pybind11_SOURCE_DIR}/include
 )
