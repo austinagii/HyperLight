@@ -40,9 +40,9 @@ set(HEADERS
   include/fcnn.hpp
 )
 
-pybind11_add_module(hypergrad ${SOURCES} ${HEADERS})
+pybind11_add_module(hyperpy ${SOURCES} ${HEADERS})
 
-target_include_directories(hypergrad 
+target_include_directories(hyperpy 
   PRIVATE 
     ${xtensor_SOURCE_DIR}/include 
     ${xtl_SOURCE_DIR}/include
