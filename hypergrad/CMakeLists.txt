@@ -40,6 +40,13 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(xtensor-python)
 
+FetchContent_Declare(
+  gtest
+  GIT_REPOSITORY https://github.com/google/googletest.git
+  GIT_TAG        v1.15.2
+)
+FetchContent_MakeAvailable(gtest)
+
 set(SOURCES
   src/bindings.cpp
 )
@@ -57,6 +64,7 @@ target_include_directories(hyperpy
     ${pybind11_SOURCE_DIR}/include
     ${xtensor-python_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/include
+    ${gtest_SOURCE_DIR}/include
     ${NUMPY_LIBRARIES}
 )
 
@@ -68,3 +76,14 @@ target_link_libraries(hyperpy PRIVATE
     Python::Python
     ${NUMPY_LIBRARIES}
 )
+
+add_executable(hypergrad_test tests/test_fcnn.cpp)
+target_include_directories(hypergrad_test PRIVATE 
+  ${CMAKE_SOURCE_DIR}/include
+  ${xtensor_SOURCE_DIR}/include 
+  ${xtl_SOURCE_DIR}/include
+)
+target_link_libraries(hypergrad_test PRIVATE 
+    gtest_main
+)
+add_test(hypergrad_test hypergrad_test)
