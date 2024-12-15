@@ -10,8 +10,9 @@ PYBIND11_MODULE(hyperpy, m) {
     m.doc() = "The hyper module";
 
     py::class_<hyper::FCNN>(m, "FCNN")
-        .def(py::init<>())
+        .def(py::init<const xt::pyarray<std::size_t>&>())
         .def("forward", [](hyper::FCNN& self, const xt::pyarray<double>& input) {
             return self.forward(input);
-        }, py::arg("input"));
+        }, py::arg("input"))
+        .def("get_weights", &hyper::FCNN::getWeights);
 }

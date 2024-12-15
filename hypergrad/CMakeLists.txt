@@ -85,5 +85,6 @@ target_include_directories(hypergrad_test PRIVATE
 )
 target_link_libraries(hypergrad_test PRIVATE 
     gtest_main
+    gmock_main
 )
 add_test(hypergrad_test hypergrad_test)
