@@ -1,4 +1,5 @@
 #include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 #define FORCE_IMPORT_ARRAY
 #include <xtensor-python/pyarray.hpp>
 #include "fcnn.h"

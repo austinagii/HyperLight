@@ -7,20 +7,35 @@
 #include <xtensor/xrandom.hpp>
 
 namespace hyper {
+  
+  /**
+   * @brief A fully connected neural network.
+   */
   class FCNN {
     public:
-      FCNN(const xt::xarray<std::size_t>& neuronsPerLayer) {
-        const auto numLayers = neuronsPerLayer.size();
-        weights = std::make_unique<std::vector<xt::xarray<double>>>();
-        weights->reserve(numLayers - 1);
+      /**
+       * @brief Construct a new FCNN
+       * 
+       * @param layerArchitecture The number of neurons per layer.
+       */
+      FCNN(const xt::xarray<std::size_t>& layerArchitecture) {
+        const auto networkDepth = layerArchitecture.size();
+        layerWeights = std::make_unique<std::vector<xt::xarray<double>>>();
+        layerWeights->reserve(networkDepth - 1);
 
-        for (size_t i = 1; i < numLayers; ++i) {
-            const auto neuronsInCurrentLayer = neuronsPerLayer[i];
-            const auto neuronsInPreviousLayer = neuronsPerLayer[i-1];
-            std::vector<std::size_t> shape = {neuronsInCurrentLayer, neuronsInPreviousLayer};
-            this->weights->push_back(xt::random::rand<double>(shape, 0, 1));
+        // For each pair of adjacent layers, create a weight matrix where:
+        // - Shape is (outputNeurons, inputNeurons) for each weight matrix
+        // - Each row represents a neuron in the current layer
+        // - Each column represents a connection to a neuron in the previous layer
+        // - Weights are initialized with random values between 0 and 1
+        for (size_t layerIdx = 1; layerIdx < networkDepth; ++layerIdx) {
+            const auto outputNeurons = layerArchitecture[layerIdx];
+            const auto inputNeurons = layerArchitecture[layerIdx-1];
+            std::vector<std::size_t> weightDimensions = {outputNeurons, inputNeurons};
+            layerWeights->push_back(xt::random::rand<double>(weightDimensions, 0, 1));
         }
       }
+
       ~FCNN() = default;
 
       double forward(const xt::xarray<double>& input) {
@@ -28,11 +43,11 @@ namespace hyper {
       }
 
       std::vector<xt::xarray<double>> getWeights() {
-        return *weights;
+        return *layerWeights;
       }
 
     private:
-      std::unique_ptr<std::vector<xt::xarray<double>>> weights;
+      std::unique_ptr<std::vector<xt::xarray<double>>> layerWeights;
   };
 }
 
