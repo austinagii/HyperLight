@@ -42,7 +42,7 @@ namespace hyper {
         return xt::sum(input)();
       }
 
-      std::vector<xt::xarray<double>> getWeights() {
+      std::vector<xt::xarray<double>> get_weights() {
         return *layerWeights;
       }
 

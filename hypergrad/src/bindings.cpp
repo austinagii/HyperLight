@@ -15,5 +15,5 @@ PYBIND11_MODULE(hyperpy, m) {
         .def("forward", [](hyper::FCNN& self, const xt::pyarray<double>& input) {
             return self.forward(input);
         }, py::arg("input"))
-        .def("get_weights", &hyper::FCNN::getWeights);
+        .def("get_weights", &hyper::FCNN::get_weights);
 }
