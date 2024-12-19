@@ -6,9 +6,9 @@ TEST(FCNN, Constructor) {
     hyper::FCNN model({5, 10, 10, 1});
     std::vector<std::vector<std::size_t>> expectedWeightsShape = {{10, 5}, {10, 10}, {1, 10}};
 
-    EXPECT_EQ(model.getWeights().size(), expectedWeightsShape.size());
-    for (size_t i = 0; i < model.getWeights().size(); ++i) {
-        auto layerWeights = model.getWeights().at(i);
+    EXPECT_EQ(model.get_weights().size(), expectedWeightsShape.size());
+    for (size_t i = 0; i < model.get_weights().size(); ++i) {
+        auto layerWeights = model.get_weights().at(i);
         EXPECT_EQ(layerWeights.shape(), expectedWeightsShape[i]);
 
         // Check that all weights are between 0 and 1.
