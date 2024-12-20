@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 
-from hyperlight import NeuralNetwork
+from hyperlight.src import NeuralNetwork
 
 
 class TestNeuralNetwork():

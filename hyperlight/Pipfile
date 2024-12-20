@@ -5,10 +5,13 @@ name = "pypi"
 
 [packages]
 numpy = "~=2.2"
+pydantic = "~=2.10"
+grpcio = "~=1.68"
 
 [dev-packages]
 pytest = "~=8.3"
 jupyterlab = "*"
+grpcio-tools = "~=1.68"
 
 [requires]
 python_version = "3.12"

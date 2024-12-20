@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package fcnn;
+
+service FCNN {
+    rpc createModel(NetworkArchitecture) returns (FCNNModel) {}
+}
+
+message NetworkArchitecture {
+    repeated int32 layers = 1;
+}
+
+message FCNNModel {
+    message LayerWeights {
+        repeated double weights = 1;
+        repeated int64 shape = 2;
+    }
+
+    repeated LayerWeights layer_weights = 1;
+}
