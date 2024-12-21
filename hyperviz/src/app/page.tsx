@@ -1,149 +1,96 @@
 'use client';
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import * as d3 from "d3";
 
-/**
- * Represents a node in a neural network
- * @interface Node
- */
-interface Node {
-  /** Unique identifier for the node */
-  id: string;
-  /** The layer number this node belongs to (0 = input, increasing numbers for hidden layers, last number for output) */
-  layer: number;
-  /** Position index of this node within its layer (0-based) */
-  index: number;
-}
+import { FCNN } from "./fcnn";
+import { Renderer } from "./renderer";
 
-/**
- * Represents a connection between two nodes in a neural network
- * @interface Link
- */
-interface Link {
-  /** ID of the source/origin node */
-  source: string;
-  /** ID of the target/destination node */
-  target: string;
-}
-
-/**
- * Represents a fully connected neural network
- * @class FCNN
- */
-class FCNN {
-  // The nodes of the network indexed by layer
-  layers: Map<number, Node[]>;  
-  // The connections between the nodes in the network
-  links: Link[]; 
-
-  constructor() {
-    // Define a hardcoded FCNN structure
-    this.layers = new Map<number, Node[]>([
-      [0, [ // Input layer
-        { id: 'input_0', layer: 0, index: 0 },
-        { id: 'input_1', layer: 0, index: 1 }, 
-        { id: 'input_2', layer: 0, index: 2 },
-        { id: 'input_3', layer: 0, index: 3 },
-        { id: 'input_4', layer: 0, index: 4 }
-      ]],
-      [1, [ // Output layer
-        { id: 'output_0', layer: 2, index: 0 },
-      ]]
-    ]);
-
-    // Generate links between layers
-    this.links = [];
-    for (let i = 0; i < this.layers.size - 1; i++) {
-      const layer = this.layers.get(i)!;
-      const nextLayer = this.layers.get(i + 1)!;
-
-      for (let currentNode of layer.values()) {
-        for (let connectedNode of nextLayer.values()) {
-          this.links.push({
-            source: currentNode.id,
-            target: connectedNode.id
-          });
-        }
-      }
-    }
-  }
-}
-
-// Create a single instance to use throughout the app
-export const fcnn = new FCNN();
-
-// Main component
 export default function Home() {
+  const [architecture, setArchitecture] = useState<number[]>([3, 5, 1]);
+  const [newLayerSize, setNewLayerSize] = useState<number>(1);
+
+  // Create and render a new FCNN instance each time the architecture changes.
   useEffect(() => {
-    // Clear any existing SVG content
-    d3.select("#network-svg").selectAll("*").remove();
+    console.log("Architecture changed:", architecture);
+    
+    // Select the SVG element inside the effect
+    const canvas = d3.select<SVGSVGElement, unknown>("#network-svg");
+    
+    // Create FCNN instance with current layers
+    const fcnn = new FCNN(architecture);
+    const renderer = new Renderer(canvas);
+    renderer.render(fcnn);
+  }, [architecture]);
 
-    const svg = d3.select("#network-svg");
-    const svgContainer = svg.node()?.getBoundingClientRect();
-    const width = svgContainer?.width || 800;
-    const height = svgContainer?.height || 800;
-    const nodeRadius = Math.min(width, height) * 0.02; // Scale node size relative to container
-    const spaceBetweenLayers = width / (fcnn.layers.size + 1); // Evenly distribute layers across width with padding
 
-    // Create a map to store node positions
-    const nodePositions = new Map<string, {x: number, y: number}>();
-
-    // Position nodes
-    fcnn.layers.forEach((nodes, layer) => {
-      const spaceBetweenNodesInLayer = height / (nodes.length + 1);
-      
-      nodes.forEach((node, index) => {
-        nodePositions.set(node.id, {
-          x: (layer + 1) * spaceBetweenLayers,
-          y: (index + 1) * spaceBetweenNodesInLayer
-        });
-      });
-    });
-
-    // Draw connections first (so they appear behind nodes)
-    svg.selectAll(".link")
-      .data(fcnn.links)
-      .enter()
-      .append("path")
-      .attr("class", "link")
-      .attr("d", (d: Link) => {
-        const source = nodePositions.get(d.source)!;
-        const target = nodePositions.get(d.target)!;
-        const midX = (source.x + target.x) / 2;
-        
-        return `M ${source.x} ${source.y}
-                C ${midX} ${source.y},
-                  ${midX} ${target.y},
-                  ${target.x} ${target.y}`;
-      })
-      .style("fill", "none")
-      .style("stroke", "#aaa")
-      .style("stroke-width", 1.5);
-
-    // Draw nodes
-    const allNodes = Array.from(fcnn.layers.values()).flat();
-    const nodes = svg.selectAll(".node")
-      .data(allNodes)
-      .enter()
-      .append("g")
-      .attr("class", "node")
-      .attr("transform", (d: Node) => {
-        const pos = nodePositions.get(d.id)!;
-        return `translate(${pos.x},${pos.y})`;
-      });
-
-    nodes.append("circle")
-      .attr("r", nodeRadius)
-      .style("fill", "#fff")
-      .style("stroke", "#333")
-      .style("stroke-width", 2);
-
-  }, []);
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start w-full h-full">
-        <svg id="network-svg" className="w-full h-full"></svg>
-      </main>
+    <div className="flex flex-col gap-4 p-4">
+      {/* Architecture Builder */}
+      <div className="border rounded p-4 bg-white shadow">
+        <h2 className="text-lg font-bold mb-4">Network Architecture</h2>
+        
+        {/* Display current layers */}
+        <div className="flex flex-wrap gap-2 mb-4">
+          {architecture.map((size, index) => (
+            <div key={index} className="flex items-center gap-2">
+              <div className="px-3 py-1 bg-blue-100 rounded">
+                {size} neurons
+              </div>
+              {index < architecture.length - 1 && <span>→</span>}
+              {architecture.length > 2 && (
+                <button
+                  onClick={() => {
+                    const newLayers = [...architecture];
+                    newLayers.splice(index, 1);
+                    setArchitecture(newLayers);
+                  }}
+                  className="text-red-500 hover:text-red-700"
+                >
+                  ×
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div className="flex gap-2 items-center">
+          <input
+            type="number"
+            min="1"
+            value={newLayerSize}
+            onChange={(e) => setNewLayerSize(parseInt(e.target.value) || 1)}
+            className="w-20 px-2 py-1 border rounded"
+          />
+          <button
+            onClick={() => {
+              const newLayers = [...architecture, newLayerSize];
+              setArchitecture(newLayers);
+            }}
+            className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Add Layer
+          </button>
+          <button
+            onClick={() => {
+              const newLayers = [...architecture.slice(0, -1), newLayerSize];
+              setArchitecture(newLayers);
+            }}
+            className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+          >
+            Update Last Layer
+          </button>
+        </div>
+      </div>
+
+      {/* Add the SVG container */}
+      <div className="border rounded p-4 bg-white shadow">
+        <svg 
+          id="network-svg"
+          width="800"
+          height="600"
+          className="w-full h-full"
+        ></svg>
+      </div>
     </div>
   );
 }

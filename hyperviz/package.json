@@ -10,12 +10,15 @@
   },
   "dependencies": {
     "d3": "^7.9.0",
+    "google-protobuf": "^3.21.4",
+    "grpc-web": "^1.5.0",
     "next": "15.1.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@types/d3": "^7.4.3",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
