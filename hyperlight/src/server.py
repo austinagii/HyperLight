@@ -10,10 +10,19 @@ from hyperpy import FCNN
 
 class FCNNServicer(fcnn_pb2_grpc.FCNNServicer):
     def createModel(self, request, context):
-        return create_fcnn(request.layers)
+        print("Received request with layers:", request.layers)
+        try:
+            return create_fcnn(request.layers)
+        except Exception as e:
+            print("Error:", str(e))
+            context.set_code(grpc.StatusCode.INTERNAL)
+            context.set_details(f'Error creating model: {str(e)}')
+            return fcnn_pb2.FCNNModel()
 
 def create_fcnn(architecture: List[int]):
+    print("Creating FCNN with architecture:", architecture)
     architecture_array = np.array(architecture)
+    print("Architecture array:", architecture_array)
     model = FCNN(architecture_array)
     weights = model.weights
     layer_weights = []
@@ -24,7 +33,7 @@ def create_fcnn(architecture: List[int]):
 def serve():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     fcnn_pb2_grpc.add_FCNNServicer_to_server(FCNNServicer(), server)
-    server.add_insecure_port('[::]:50051')
+    server.add_insecure_port('[::]:8090')
     server.start()
     server.wait_for_termination()
 
