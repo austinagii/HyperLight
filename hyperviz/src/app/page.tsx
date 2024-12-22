@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import * as d3 from "d3";
 
 import { FCNN } from "./fcnn";
@@ -8,20 +8,27 @@ import { Renderer } from "./renderer";
 export default function Home() {
   const [architecture, setArchitecture] = useState<number[]>([3, 5, 1]);
   const [newLayerSize, setNewLayerSize] = useState<number>(1);
+  const fcnnRef = useRef<FCNN | null>(null);
+  const rendererRef = useRef<Renderer | null>(null);
 
   // Create and render a new FCNN instance each time the architecture changes.
   useEffect(() => {
     console.log("Architecture changed:", architecture);
     
-    // Select the SVG element inside the effect
     const canvas = d3.select<SVGSVGElement, unknown>("#network-svg");
     
-    // Create FCNN instance with current layers
-    const fcnn = new FCNN(architecture);
-    const renderer = new Renderer(canvas);
-    renderer.render(fcnn);
+    // Store instances in refs
+    fcnnRef.current = new FCNN(architecture);
+    rendererRef.current = new Renderer(canvas, fcnnRef.current);
+    rendererRef.current.render();
   }, [architecture]);
 
+  // Add handler for animation button
+  const handleAnimate = () => {
+    if (fcnnRef.current && rendererRef.current) {
+      rendererRef.current.animateLinks();
+    }
+  };
 
   return (
     <div className="flex flex-col gap-4 p-4">
@@ -84,6 +91,14 @@ export default function Home() {
 
       {/* Add the SVG container */}
       <div className="border rounded p-4 bg-white shadow">
+        <div className="mb-4">
+          <button
+            onClick={handleAnimate}
+            className="px-3 py-1 bg-purple-500 text-white rounded hover:bg-purple-600"
+          >
+            Animate Network
+          </button>
+        </div>
         <svg 
           id="network-svg"
           width="800"

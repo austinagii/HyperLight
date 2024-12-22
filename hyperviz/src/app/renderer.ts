@@ -17,101 +17,43 @@ interface Point {
 }
 
 /**
+ * The dimensions (width and height) of a 2D element.
+ */
+interface Dimensions {
+    width: number;
+    height: number;
+}
+
+/**
  * Renderer is responsible for drawing the FCNN on the canvas.
  */
 export class Renderer {
     private canvas: d3.Selection<SVGSVGElement, unknown, null, undefined>;
+    private canvasDimensions: Dimensions;
+    private fcnn: FCNN;
 
-    constructor(canvas: d3.Selection<SVGSVGElement, unknown, null, undefined>) {
+    constructor(canvas: d3.Selection<SVGSVGElement, unknown, null, undefined>, fcnn: FCNN) {
         this.canvas = canvas;
+        this.fcnn = fcnn;
+        this.canvasDimensions = this.getCanvasDimensions();
     }
 
     /**
-     * Render the specified FCNN on the canvas associated with this renderer.
-     *
-     * @param fcnn - The FCNN to render
+     * Calculate the positions of all nodes in the FCNN.
+     * 
+     * @returns A map of node IDs to their positions.
      */
-    render(fcnn: FCNN) {
-        // Clear any scheduled animations
-        // for (let i = 0; i < 100000; i++) {
-        //     window.clearTimeout(i);
-        // }
-        this.canvas.selectAll("*").remove();
-
-        const canvasContainer = this.canvas.node()?.getBoundingClientRect();
-        const canvasWidth = canvasContainer?.width || CANVAS_DEFAULT_WIDTH;
-        const canvasHeight = canvasContainer?.height || CANVAS_DEFAULT_HEIGHT;
-        console.log("Rendering FCNN on canvas with dimensions:", { width: canvasWidth, height: canvasHeight });
-
-        var nodePositionsById = this.calculateNodePositions(fcnn.nodesByLayer, canvasWidth, canvasHeight);
-        const nodeRadius = Math.min(canvasWidth, canvasHeight) * NODE_RADIUS_SCALE;
-        const allNodes = Array.from(fcnn.nodesByLayer.values()).flat();
-        this.drawNodes(allNodes, nodePositionsById, nodeRadius);
-
-        const animateLayer = (layerIndex: number) => {
-            console.log(`=== Animating layer ${layerIndex} ===`);
-            if (layerIndex >= fcnn.linksByLayer.size) {
-                // Clear any existing animations by removing all paths
-                this.canvas.selectAll("path").remove();
-                setTimeout(() => { animateLayer(0) }, ANIMATION_DELAY);
-                return;
-            };
-
-            const layerLinks = fcnn.linksByLayer.get(layerIndex) || [];
-            console.log(`Layer ${layerIndex} has ${layerLinks.length} links`);
-
-            const paths = this.canvas.selectAll(`.link-layer-${layerIndex}`)
-                .data(layerLinks)
-                .enter()
-                .append("path");
-
-            console.log(`Created ${paths.size()} path elements`);
-
-            paths
-                .attr("class", `link link-layer-${layerIndex}`)
-                .attr("d", (d: NetworkLink) => {
-                    const source = nodePositionsById.get(d.source)!;
-                    const target = nodePositionsById.get(d.target)!;
-                    const sourceControlX = source.x + (target.x - source.x) * 0.4;
-                    const targetControlX = source.x + (target.x - source.x) * 0.6;
-                    return `M ${source.x + nodeRadius} ${source.y} C ${sourceControlX} ${source.y}, ${targetControlX} ${target.y}, ${target.x - nodeRadius} ${target.y}`;
-                })
-                .style("fill", "none")
-                .style("stroke", "#000")
-                .style("stroke-width", 2);
-
-            // After verifying paths are visible, we'll animate them
-            paths.each(function () {
-                const pathLength = this.getTotalLength();
-                console.log("Path length:", pathLength);
-
-                d3.select(this)
-                    .attr("stroke-dasharray", pathLength)
-                    .attr("stroke-dashoffset", pathLength)
-                    .transition()
-                    .duration(ANIMATION_DURATION)
-                    .attr("stroke-dashoffset", 0);
-            });
-            setTimeout(() => animateLayer(layerIndex + 1), ANIMATION_DELAY);
-        }
-        animateLayer(0);
-    }
-
-    private calculateNodePositions(
-        nodesByLayer: Map<number, NetworkNode[]>,
-        canvasWidth: number,
-        canvasHeight: number):
-        Map<string, { x: number, y: number }> {
-
+    private calculateNodePositions(): Map<string, Point> {
         console.log("Calculating node positions...");
+        console.log("Canvas dimensions:", this.canvasDimensions);
         const nodePositionsById = new Map<string, { x: number, y: number }>();
         // Calculate the space required to evenly distrbute layers horizontally across the canvas, 
         // adding 1 to create padding on both sides.
-        const spaceBetweenLayers = canvasWidth / (nodesByLayer.size + 1);
-        nodesByLayer.forEach((layerNodes, layerIdx) => {
+        const spaceBetweenLayers = this.canvasDimensions.width / (this.fcnn.nodesByLayer.size + 1);
+        this.fcnn.nodesByLayer.forEach((layerNodes, layerIdx) => {
             // Calculate the space required to evenly distrbute nodes vertically within each layer, 
             // adding 1 to create padding on both sides.
-            const spaceBetweenNodesInLayer = canvasHeight / (layerNodes.length + 1);
+            const spaceBetweenNodesInLayer = this.canvasDimensions.height / (layerNodes.length + 1);
             layerNodes.forEach((node, nodeIdx) => {
                 nodePositionsById.set(node.id, {
                     // Calculate x,y coordinates with offsets to center nodes within each layer and 
@@ -124,9 +66,12 @@ export class Renderer {
         return nodePositionsById;
     }
 
-    private drawNodes(nodes: NetworkNode[], nodePositionsById: Map<string, Point>, nodeRadius: number) {
+    private drawNodes(nodePositionsById: Map<string, Point>) {
+        const allNodes = Array.from(this.fcnn.nodesByLayer.values()).flat();
+        const nodeRadius = Math.min(this.canvasDimensions.width, this.canvasDimensions.height) * NODE_RADIUS_SCALE;
+
         this.canvas.selectAll(".node")
-            .data(nodes)
+            .data(allNodes)
             .enter()
             .append("g")
             .attr("class", "node")
@@ -135,10 +80,102 @@ export class Renderer {
                 return `translate(${pos.x},${pos.y})`;
             })
             .append("circle")
+            // TODO: Use a configuration object for node styling.
             .attr("r", nodeRadius)
             .style("fill", "#fff")
             .style("stroke", "#333")
             .style("stroke-width", 2);
+    }
 
+    private drawLinks(nodePositionsById: Map<string, Point>) {
+        // TODO: This is a duplicate of the node radius calculation from drawNodes. 
+        //       This should be refactored to use a configuration object.
+        const nodeRadius = Math.min(this.canvasDimensions.width, this.canvasDimensions.height) * NODE_RADIUS_SCALE;
+
+        this.fcnn.linksByLayer.forEach((layerLinks, layerIndex) => {
+            this.canvas.selectAll(`.link-layer-${layerIndex}`)
+                .data(layerLinks)
+                .enter()
+                .append("path")
+                .attr("class", `link link-layer-${layerIndex}`)
+                .attr("d", (d: NetworkLink) => {
+                    const source = nodePositionsById.get(d.source)!;
+                    const target = nodePositionsById.get(d.target)!;
+                    const sourceControlX = source.x + (target.x - source.x) * 0.4;
+                    const targetControlX = source.x + (target.x - source.x) * 0.6;
+                    // Position the link endpoints at the vertical center of each node, but offset them 
+                    // horizontally by the node radius to connect at the node edges rather than centers.
+                    // This prevents the link from overlapping with the node circles.
+                    return `M ${source.x + nodeRadius} ${source.y} 
+                            C ${sourceControlX} ${source.y}, ${targetControlX} ${target.y}, 
+                              ${target.x - nodeRadius} ${target.y}`;
+                })
+                // TODO: Use a configuration object for link styling.
+                .style("fill", "none")
+                .style("stroke", "#000")
+                .style("stroke-width", 2);
+        });
+    }
+
+    /**
+     * Animate the links in the FCNN.
+     */
+    public animateLinks() {
+        // Reset all links to their original state.
+        this.canvas.selectAll('.link').each(function () {
+            const pathLength = this.getTotalLength();
+            d3.select(this)
+                .attr("stroke-dasharray", pathLength)
+                .attr("stroke-dashoffset", pathLength);
+        });
+
+        for (let layerIndex = 0; layerIndex < this.fcnn.linksByLayer.size; layerIndex++) {
+            setTimeout(() => {
+                console.log(`=== Animating layer ${layerIndex} ===`);
+                this.canvas.selectAll(`.link-layer-${layerIndex}`).each(function () {
+                    const pathLength = this.getTotalLength();
+                    console.log("Path length:", pathLength);
+
+                    d3.select(this)
+                        .attr("stroke-dasharray", pathLength)
+                        .attr("stroke-dashoffset", pathLength)
+                        .transition()
+                        .duration(ANIMATION_DURATION)
+                        .attr("stroke-dashoffset", 0);
+                });
+            }, ANIMATION_DELAY * layerIndex);
+        }
+    }
+
+    /**
+     * Render the specified FCNN on the canvas associated with this renderer.
+     *
+     * @param fcnn - The FCNN to render
+     */
+    render() {
+        this.resetCanvas();
+
+        var nodePositionsById = this.calculateNodePositions();
+        this.drawNodes(nodePositionsById);
+        this.drawLinks(nodePositionsById);
+    }
+
+    /**
+     * Reset the canvas by removing all elements.
+     */
+    private resetCanvas() {
+        this.canvas.selectAll("*").remove();
+    }
+
+    /**
+     * Get the dimensions (width and height) of the canvas.
+     * 
+     * @returns The dimensions of the canvas.
+     */
+    private getCanvasDimensions() {
+        const canvasContainer = this.canvas.node()?.getBoundingClientRect();
+        const canvasWidth = canvasContainer?.width || CANVAS_DEFAULT_WIDTH;
+        const canvasHeight = canvasContainer?.height || CANVAS_DEFAULT_HEIGHT;
+        return { width: canvasWidth, height: canvasHeight };
     }
 }
