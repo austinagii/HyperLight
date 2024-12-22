@@ -2,8 +2,8 @@
 import { useEffect, useState, useRef } from "react";
 import * as d3 from "d3";
 
-import { FCNN } from "./fcnn";
-import { Renderer } from "./renderer";
+import { FCNN } from "@/lib/fcnn";
+import { Renderer } from "@/lib/renderer";
 
 export default function Home() {
   const [architecture, setArchitecture] = useState<number[]>([3, 5, 1]);

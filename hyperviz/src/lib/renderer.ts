@@ -1,4 +1,4 @@
-import { NetworkLink, NetworkNode, FCNN } from "./fcnn";
+import { NetworkLink, NetworkNode, FCNN } from "@/lib/fcnn";
 import * as d3 from "d3";
 
 

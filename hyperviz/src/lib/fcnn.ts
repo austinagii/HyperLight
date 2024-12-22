@@ -1,5 +1,5 @@
-const { FCNNModel, NetworkArchitecture } = require("./fcnn_pb");
-const { FCNNClient } = require("./fcnn_grpc_web_pb");
+const { FCNNModel, NetworkArchitecture } = require("@/api/fcnn_pb");
+const { FCNNClient } = require("@/api/fcnn_grpc_web_pb");
 
 /**
  * Represents a node in a neural network
