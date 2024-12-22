@@ -8,7 +8,17 @@ const NODE_RADIUS_SCALE = 0.02; // Used to scale node size relative to canvas si
 const ANIMATION_DURATION = 1000;
 const ANIMATION_DELAY = 1000;
 
+/**
+ * A simple 2D point with x and y coordinates.
+ */
+interface Point {
+    x: number;
+    y: number;
+}
 
+/**
+ * Renderer is responsible for drawing the FCNN on the canvas.
+ */
 export class Renderer {
     private canvas: d3.Selection<SVGSVGElement, unknown, null, undefined>;
 
@@ -16,51 +26,34 @@ export class Renderer {
         this.canvas = canvas;
     }
 
+    /**
+     * Render the specified FCNN on the canvas associated with this renderer.
+     *
+     * @param fcnn - The FCNN to render
+     */
     render(fcnn: FCNN) {
-        console.log("=== Rendering FCNN ===");
-        console.log("FCNN structure:", {
-            nodesByLayer: fcnn.nodesByLayer,
-            linksByLayer: fcnn.linksByLayer,
-            totalLayers: fcnn.linksByLayer.size
-        });
-
         // Clear any scheduled animations
-        for (let i = 0; i < 1000; i++) {
-            window.clearTimeout(i);
-        }
-        // Clear any existing SVG content
-        this.canvas.selectAll("path").remove();
+        // for (let i = 0; i < 100000; i++) {
+        //     window.clearTimeout(i);
+        // }
         this.canvas.selectAll("*").remove();
 
         const canvasContainer = this.canvas.node()?.getBoundingClientRect();
-        const width = canvasContainer?.width || CANVAS_DEFAULT_WIDTH;
-        const height = canvasContainer?.height || CANVAS_DEFAULT_HEIGHT;
-        console.log("Canvas dimensions:", { width, height });
+        const canvasWidth = canvasContainer?.width || CANVAS_DEFAULT_WIDTH;
+        const canvasHeight = canvasContainer?.height || CANVAS_DEFAULT_HEIGHT;
+        console.log("Rendering FCNN on canvas with dimensions:", { width: canvasWidth, height: canvasHeight });
 
-        const nodeRadius = Math.min(width, height) * NODE_RADIUS_SCALE;
-
-        // Create a map to store node positions
-        const nodePositions = new Map<string, { x: number, y: number }>();
-
-        // Calculate each node's position.
-        console.log("Calculating node positions...");
-        const spaceBetweenLayers = width / (fcnn.nodesByLayer.size + 1); // Evenly distribute layers across width with padding
-        fcnn.nodesByLayer.forEach((nodes, layerIdx) => {
-            const spaceBetweenNodesInLayer = height / (nodes.length + 1);
-            nodes.forEach((node, nodeIdx) => {
-                nodePositions.set(node.id, {
-                    x: (layerIdx + 1) * spaceBetweenLayers,
-                    y: (nodeIdx + 1) * spaceBetweenNodesInLayer
-                });
-            });
-        });
+        var nodePositionsById = this.calculateNodePositions(fcnn.nodesByLayer, canvasWidth, canvasHeight);
+        const nodeRadius = Math.min(canvasWidth, canvasHeight) * NODE_RADIUS_SCALE;
+        const allNodes = Array.from(fcnn.nodesByLayer.values()).flat();
+        this.drawNodes(allNodes, nodePositionsById, nodeRadius);
 
         const animateLayer = (layerIndex: number) => {
             console.log(`=== Animating layer ${layerIndex} ===`);
             if (layerIndex >= fcnn.linksByLayer.size) {
                 // Clear any existing animations by removing all paths
                 this.canvas.selectAll("path").remove();
-                setTimeout(() => {animateLayer(0)}, ANIMATION_DELAY);
+                setTimeout(() => { animateLayer(0) }, ANIMATION_DELAY);
                 return;
             };
 
@@ -77,8 +70,8 @@ export class Renderer {
             paths
                 .attr("class", `link link-layer-${layerIndex}`)
                 .attr("d", (d: NetworkLink) => {
-                    const source = nodePositions.get(d.source)!;
-                    const target = nodePositions.get(d.target)!;
+                    const source = nodePositionsById.get(d.source)!;
+                    const target = nodePositionsById.get(d.target)!;
                     const sourceControlX = source.x + (target.x - source.x) * 0.4;
                     const targetControlX = source.x + (target.x - source.x) * 0.6;
                     return `M ${source.x + nodeRadius} ${source.y} C ${sourceControlX} ${source.y}, ${targetControlX} ${target.y}, ${target.x - nodeRadius} ${target.y}`;
@@ -101,25 +94,51 @@ export class Renderer {
             });
             setTimeout(() => animateLayer(layerIndex + 1), ANIMATION_DELAY);
         }
-
         animateLayer(0);
+    }
 
-        // Draw nodes
-        const allNodes = Array.from(fcnn.nodesByLayer.values()).flat();
-        const nodes = this.canvas.selectAll(".node")
-            .data(allNodes)
+    private calculateNodePositions(
+        nodesByLayer: Map<number, NetworkNode[]>,
+        canvasWidth: number,
+        canvasHeight: number):
+        Map<string, { x: number, y: number }> {
+
+        console.log("Calculating node positions...");
+        const nodePositionsById = new Map<string, { x: number, y: number }>();
+        // Calculate the space required to evenly distrbute layers horizontally across the canvas, 
+        // adding 1 to create padding on both sides.
+        const spaceBetweenLayers = canvasWidth / (nodesByLayer.size + 1);
+        nodesByLayer.forEach((layerNodes, layerIdx) => {
+            // Calculate the space required to evenly distrbute nodes vertically within each layer, 
+            // adding 1 to create padding on both sides.
+            const spaceBetweenNodesInLayer = canvasHeight / (layerNodes.length + 1);
+            layerNodes.forEach((node, nodeIdx) => {
+                nodePositionsById.set(node.id, {
+                    // Calculate x,y coordinates with offsets to center nodes within each layer and 
+                    // prevent edge clipping
+                    x: (layerIdx + 1) * spaceBetweenLayers,
+                    y: (nodeIdx + 1) * spaceBetweenNodesInLayer
+                });
+            });
+        });
+        return nodePositionsById;
+    }
+
+    private drawNodes(nodes: NetworkNode[], nodePositionsById: Map<string, Point>, nodeRadius: number) {
+        this.canvas.selectAll(".node")
+            .data(nodes)
             .enter()
             .append("g")
             .attr("class", "node")
             .attr("transform", (d: NetworkNode) => {
-                const pos = nodePositions.get(d.id)!;
+                const pos = nodePositionsById.get(d.id)!;
                 return `translate(${pos.x},${pos.y})`;
-            });
-
-        nodes.append("circle")
+            })
+            .append("circle")
             .attr("r", nodeRadius)
             .style("fill", "#fff")
             .style("stroke", "#333")
             .style("stroke-width", 2);
+
     }
 }
