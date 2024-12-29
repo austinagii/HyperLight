@@ -33,7 +33,7 @@ def create_fcnn(architecture: List[int]):
 def serve():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     fcnn_pb2_grpc.add_FCNNServicer_to_server(FCNNServicer(), server)
-    server.add_insecure_port('[::]:8090')
+    server.add_insecure_port('0.0.0.0:8090')
     server.start()
     server.wait_for_termination()
 

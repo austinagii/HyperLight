@@ -1,0 +1,11 @@
+FROM python:3.12-bullseye
+
+WORKDIR /hyperlight 
+
+COPY . .
+
+RUN pip install -r requirements.txt 
+
+ENV PYTHONPATH=/app/build
+
+CMD ["python", "src/server.py"]

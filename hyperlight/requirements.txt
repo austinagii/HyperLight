@@ -1,7 +1,8 @@
 -i https://pypi.org/simple
 annotated-types==0.7.0; python_version >= '3.8'
 grpcio==1.68.1; python_version >= '3.8'
-numpy==2.2.0; python_version >= '3.10'
+numpy==2.2.1; python_version >= '3.10'
+protobuf==5.29.2; python_version >= '3.8'
 pydantic==2.10.4; python_version >= '3.8'
 pydantic-core==2.27.2; python_version >= '3.8'
 typing-extensions==4.12.2; python_version >= '3.8'

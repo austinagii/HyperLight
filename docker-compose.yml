@@ -1,0 +1,26 @@
+name: hyperlight
+
+services:
+  libraries:
+    build: ./hypergrad
+    volumes:
+      - hyperlight:/app/build
+
+  api:
+    build: ./hyperlight
+    depends_on:
+      - libraries
+    volumes:
+      - hyperlight:/app/build
+
+  grpc-proxy:
+    image: envoyproxy/envoy:v1.28.0
+    ports:
+      - 8080:8080
+
+  volumes:
+    hyperlight:
+
+  networks:
+    hyperlight:
+      driver: bridge

@@ -4,14 +4,16 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-numpy = "~=2.2"
 pydantic = "~=2.10"
-grpcio = "~=1.68"
+grpcio = "==1.68.1"
+numpy = "==2.2.1"
+protobuf = "==5.29.2"
+torch = "==2.5.1"
 
 [dev-packages]
 pytest = "~=8.3"
 jupyterlab = "*"
-grpcio-tools = "~=1.68"
+grpcio-tools = "==1.68.1"
 
 [requires]
 python_version = "3.12"

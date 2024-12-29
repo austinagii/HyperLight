@@ -15,7 +15,7 @@ export default function Home() {
   useEffect(() => {
     console.log("Architecture changed:", architecture);
     
-    const canvas = d3.select<SVGSVGElement, unknown>("#network-svg");
+    const canvas = d3.select<SVGSVGElement, unknown>("svg#network-svg");
     
     // Store instances in refs
     fcnnRef.current = new FCNN(architecture);
